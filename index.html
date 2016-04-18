@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="/static/main.css" />
+  <link rel="stylesheet" type="text/css" href="/static/main.css" async/>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js" async></script>
 </head>
 <body>
   <div id="container">
@@ -12,16 +13,21 @@
     </nav>
     <div id="main-container">
       <main>
+        <form id="topic-form" autocomplete="off">
+          <input id="topic-title" class="title" type="text" name="title" placeholder="New topic..." autocomplete="off">
+          <textarea maxlength="512" id="topic-body" class="body" name="body" placeholder="Message body" cols="40" rows="3" autocomplete="off"></textarea>
+          <input type="submit" value="Submit">
+        </form>
         <article>
           <div class="top-bar">
-            <span class="tag">General</span> <span class="title" title="2069/04/20 4:20 EST">Lorem Ipsum Dolor</span><span class="author">tetrisd</span>
+            <span class="tag">[General]</span><span class="title" title="2069/04/20 4:20 EST">Lorem Ipsum Dolor</span><span class="author">tetrisd</span>
           </div>
           <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam...</p>
           <div class="bottom-bar"><a href="#">12 replies</a></div>
         </article>
         <article>
           <div class="top-bar">
-            <span class="tag">Bending</span> <span class="title" title="2069/04/20 4:20 EST">To much lag CANT BEND!</span><span class="author">Xx_Noob_xX</span>
+            <span class="tag">[Bending]</span><span class="title" title="2069/04/20 4:20 EST">To much lag CANT BEND!</span><span class="author">Xx_Noob_xX</span>
           </div>
           <p>Uhh lemme talk 2 server owner this server sux</p>
           <div class="bottom-bar"><a href="#">0 replies</a></div>
@@ -34,4 +40,21 @@
     </div>
   </div>
 </body>
+<script>
+var expanded = false;
+$(document).mouseup(function() {
+  if (expanded && document.activeElement.id !== "topic-body" && document.activeElement.id !== "topic-title")
+  {
+    $("#topic-form").animate({"height": "49px"}, "fast");
+    expanded = false;
+  }
+});
+$("#topic-title").click(function() {
+  if (!expanded)
+  {
+    $("#topic-form").animate({"height": "195px"}, "fast");
+    expanded = true;
+  }
+});
+</script>
 </html>

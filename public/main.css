@@ -4,7 +4,6 @@ html, body {
   font-size: 14pt;
   padding: 0px;
   color: #222;
-  font-family: 'Segoe UI', Arial, sans-serif;
 }
 
 body {
@@ -104,9 +103,9 @@ article .top-bar span {
 }
 
 article .top-bar .tag {
-  background-color: #888;
-  color: #EEE;
-  padding: 0px 10px 2px 10px;
+  color: #999;
+  font-weight: 400;
+  padding: 0px 5px 0px 5px;
 }
 
 article .top-bar .title {
@@ -130,4 +129,43 @@ article p {
 article .bottom-bar {
   float: right;
   font-size: 12pt;
+}
+
+#topic-form {
+  width: 921px;
+  overflow: hidden;
+  height: 49px;
+}
+
+#topic-form * {
+  width: 901px;
+  border: none;
+  padding: 10px;
+}
+
+#topic-form .title {
+  font-size: 16pt;
+  font-weight: 600;
+  border-bottom: 1px solid #AAA;
+}
+
+* {
+  font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+input[type=text], textarea {
+  outline: none;
+  background-color: #EEE;
+  font-size: 14pt;
+}
+
+input[type=submit] {
+  color: #EEE;
+  font-size: 14pt;
+  background-color: #4da6ff;
+}
+
+input[type=submit]:hover {
+  background-color: #5fb6ff;
+  cursor: pointer;
 }
