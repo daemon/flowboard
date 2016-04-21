@@ -159,29 +159,73 @@ article .bottom-bar {
 
 #topic-form * {
   width: 901px;
-  border: none;
-  padding: 10px;
 }
 
 #topic-form .title {
   font-size: 16pt;
   font-weight: 600;
   padding-bottom: 5px;
-  border-bottom: 1px solid #AAA;
 }
 
 * {
   font-family: 'Segoe UI', Arial, sans-serif;
 }
 
-input[type=text], textarea {
+.popup-container {
+  visibility: hidden;
+  left: 0;
+  right: 0;
+  margin: 0 auto;
+  top: 20%;
+  background-color: #EEE;
+  position: fixed;
+  z-index: 10000;
+  padding: 20px;
+  width: 400px;
+  opacity: 0;
+}
+
+.popup-form {
+  width: 400px;
+}
+
+.popup-form input {
+  display: block;
+  width: 380px;
+  margin-top: 5px;
+}
+
+.popup-form input[type=submit] {
+  width: 400px;
+}
+
+.bg-cover {
+  visibility: hidden;
+  position: fixed;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  background-color: #000;
+  z-index: 9999;
+}
+
+input[type=text], input[type=password], input[type=email], textarea {
   outline: none;
+  padding: 10px;
   background-color: #EEE;
   font-size: 14pt;
+  border: none;
+}
+
+input[type=password], input[type=text], input[type=email] {
+  border-bottom: 1px solid #AAA;
+  padding-bottom: 5px;
 }
 
 input[type=submit] {
   color: #EEE;
+  padding: 10px;
+  border: none;
   font-size: 14pt;
   background-color: #4da6ff;
 }
@@ -189,4 +233,5 @@ input[type=submit] {
 input[type=submit]:hover {
   background-color: #5fb6ff;
   cursor: pointer;
+  border: none;
 }

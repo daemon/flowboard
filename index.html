@@ -6,11 +6,28 @@
 </head>
 <body>
   <link rel="stylesheet" type="text/css" href="/static/main.css">
+  <div class="bg-cover"></div>
+  <div class="popup-container" id="login-container">
+    <form id="login-form" class="popup-form" action="/login" method="post" autocomplete="off">
+      <input id="login-user" type="text" name="username" placeholder="Username">
+      <input type="password" name="password" placeholder="Password">
+      <input type="submit" value="Login">
+    </form>
+  </div>
+  <div id="signup-container" class="popup-container">
+    <form id="signup-form" class="popup-form" action="/signup" method="post" autocomplete="off">
+      <input id="signup-email" type="email" name="email" placeholder="E-mail">
+      <input type="text" name="username" placeholder="Username">
+      <input type="password" name="password" placeholder="Password">
+      <input type="password" name="confirm-password" placeholder="Confirm password">
+      <input type="submit" value="Sign up">
+    </form>
+  </div>
   <div id="container">
     <nav>
       <h2><a class="linkless" title="home" href="/">flowboard</a></h2><span> &mdash; a message board that just works</span>
-      <a class="action" href="/signup">Sign up</a>
-      <a href="#login">Login</a>
+      <a id="signup-btn" class="action" href="#">Sign up</a>
+      <a id="login-btn" href="#">Login</a>
     </nav>
     <div id="main-container">
       <main>
