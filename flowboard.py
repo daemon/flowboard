@@ -3,10 +3,17 @@ import cherrypy
 import os
 import os.path
 
-class FlowBoard():
+"""
+Router for all endpoints
+"""
+class FlowBoard:
   @cherrypy.expose
   def index(self):
     return open('index.html')
+
+  @cherrypy.expose
+  def post(self, title, body):
+    return "title: %s, body: %s" % (title, body)
 
 if __name__ == '__main__':
   conf = {

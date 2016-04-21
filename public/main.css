@@ -26,6 +26,26 @@ nav h2 {
   font-size: 24pt;
 }
 
+a.linkless {
+  text-decoration: none;
+  color: #222;
+}
+
+a.linkless:hover {
+  text-decoration: none;
+  color: #222;
+}
+
+a.linkless:visited {
+  text-decoration: none;
+  color: #222;
+}
+
+a.linkless:active {
+  text-decoration: none;
+  color: #222;
+}
+
 nav span {
   color: #888;
   font-size: 12pt;
@@ -33,7 +53,7 @@ nav span {
   bottom: 2pt;
 }
 
-nav a {
+nav > a {
   color: #EEE;
   display: inline-block;
   float: right;
@@ -44,15 +64,15 @@ nav a {
   background-color: #666;
 }
 
-nav a:hover {
+nav > a:hover {
   background-color: #888;
 }
 
-nav a.action {
+nav > a.action {
   background-color: #4da6ff;
 }
 
-nav a.action:hover {
+nav > a.action:hover {
   background-color: #5fb6ff;
 }
 
@@ -146,6 +166,7 @@ article .bottom-bar {
 #topic-form .title {
   font-size: 16pt;
   font-weight: 600;
+  padding-bottom: 5px;
   border-bottom: 1px solid #AAA;
 }
 

@@ -1,19 +1,20 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <link rel="stylesheet" type="text/css" href="/static/main.css" async/>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js" async></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js" defer></script>
+  <script src="/static/flowboard-index.js" defer></script>
 </head>
 <body>
+  <link rel="stylesheet" type="text/css" href="/static/main.css">
   <div id="container">
     <nav>
-      <h2>flowboard</h2><span> &mdash; a message board that just works</span>
+      <h2><a class="linkless" title="home" href="/">flowboard</a></h2><span> &mdash; a message board that just works</span>
       <a class="action" href="/signup">Sign up</a>
       <a href="#login">Login</a>
     </nav>
     <div id="main-container">
       <main>
-        <form id="topic-form" autocomplete="off">
+        <form id="topic-form" autocomplete="off" action="/post" method="post">
           <input id="topic-title" class="title" type="text" name="title" placeholder="New topic..." autocomplete="off">
           <textarea maxlength="512" id="topic-body" class="body" name="body" placeholder="Message body" cols="40" rows="3" autocomplete="off"></textarea>
           <input type="submit" value="Submit">
@@ -40,21 +41,4 @@
     </div>
   </div>
 </body>
-<script>
-var expanded = false;
-$(document).mouseup(function() {
-  if (expanded && document.activeElement.id !== "topic-body" && document.activeElement.id !== "topic-title")
-  {
-    $("#topic-form").animate({"height": "49px"}, "fast");
-    expanded = false;
-  }
-});
-$("#topic-title").click(function() {
-  if (!expanded)
-  {
-    $("#topic-form").animate({"height": "195px"}, "fast");
-    expanded = true;
-  }
-});
-</script>
 </html>
