@@ -17,14 +17,14 @@ class Validator:
   """
   @staticmethod
   def user_valid(user):
-    return re.match(user_rgx, user.strip())
+    return re.match(Validator.user_rgx, user.strip())
 
   """
   Roughly checks if the email is of name@domain.tld format
   """
   @staticmethod
   def email_valid(email):
-    return re.match(email_rgx, email.strip())
+    return re.match(Validator.email_rgx, email.strip())
 
   """
   Determines if password is valid--contains at least 10 characters, has lower/upper/numeric chars
@@ -70,37 +70,40 @@ class AuthDatabase:
   set depending on outcome
   """
   def create_user(self, form_data):
-    ret = status_bad
-    if self.users.find_one({"name": form_data.name.strip()}):
-      ret |= status_name_dup
+    ret = self.status_bad
+    if self.users.find_one({"name": form_data.user.strip()}):
+      ret |= self.status_name_dup
     if self.users.find_one({"email": form_data.email}):
-      ret |= status_email_dup
-    if ret != status_bad:
+      ret |= self.status_email_dup
+    if ret != self.status_bad:
       return ret
     salt = ''.join(random.choice("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz123456789$!@#$%^&*()") for _ in range(8))
     try:
       hash64 = sha256x2(form_data.password, salt).decode("utf-8")
-      self.users.insert_one({"name": form_data.name, "email": form_data.email, "password": hash64, "salt": salt})
-      return status_ok
+      self.users.insert_one({"name": form_data.user, "email": form_data.email, "password": hash64, "salt": salt})
+      return self.status_ok
     except:
       return ret
 
+"""
+Wrapper/adapter between database and front end.
+"""
 class AuthService:
   def __init__(self, database):
     self.database = database
 
   """
-  Wrapper/adapter between database and front end. Returns dictionary response suitable for conversion to JSON
+  Attempts to register a user. Returns dictionary response suitable for conversion to JSON
   """
   def register(self, form_data):
     if not form_data.valid():
       return {"success": False, "password_valid": form_data.password_valid, 
         "email_valid": form_data.email_valid, "user_valid": form_data.user_valid}
-    response = database.create_user(form_data)
-    register_response = {"success": response & status_ok}
-    if not response & status_ok:
-      register_response["name_dup"] = response & AuthDatabase.status_name_dup
-      register_response["name_email_dup"] = response & AuthDatabase.status_email_dup
+    response = self.database.create_user(form_data)
+    register_response = {"success": response & AuthDatabase.status_ok == AuthDatabase.status_ok}
+    if not response & AuthDatabase.status_ok:
+      register_response["name_dup"] = response & AuthDatabase.status_name_dup == AuthDatabase.status_name_dup
+      register_response["email_dup"] = response & AuthDatabase.status_email_dup == AuthDatabase.status_email_dup
     return register_response
 
   class FormData:
@@ -108,9 +111,9 @@ class AuthService:
       self.user = user
       self.password = password
       self.email = email
-      self.user_valid = Validator.user_valid(self.user)
-      self.password_valid = Validator.password_valid(self.password)
-      self.email_valid = Validator.email_valid(self.email)
+      self.user_valid = Validator.user_valid(self.user) is not None
+      self.password_valid = Validator.password_valid(self.password).__bool__()
+      self.email_valid = Validator.email_valid(self.email) is not None
 
     def valid(self):
       return self.user_valid and self.password_valid and self.email_valid
