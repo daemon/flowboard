@@ -51,7 +51,9 @@ $(".bg-cover").click(function() {
   }
 });
 
-var signupErrorTxt = "<span style='display: block; width: 100%; text-align: center;'>";
+var createNotifyMsg = function(message) {
+  return "<span style='display: block; width: 100%; text-align: center;'>" + message + "</span>";
+};
 
 var cssFormValidate = function(formElement, valid) {
   if (valid)
@@ -59,6 +61,36 @@ var cssFormValidate = function(formElement, valid) {
   else
     $(formElement).css("border-bottom", "1px solid red");
 };
+
+var doLogin = function() {
+  var socket = new WebSocket("wss://flowboard.rocketeer.net:9001");
+  var user = $("#login-user").val();
+  var password = $("#login-password").val();
+  var loginForm = $("#login-form");
+  var loginNotify = $("#login-error-notify");
+  loginForm.hide();
+  loginNotify.html(createNotifyMsg("Logging in..."));
+  socket.onmessage = function(event) {
+    var response = JSON.parse(event.data);
+    if (response["success"]) {
+      var expiryDate = new Date();
+      expiryDate.setDate(expiryDate.getDate() + 14);
+      document.cookie = "ssid=" + response["session_id"] + "; expires=" + expiryDate.toISOString() + ";";
+      loginNotify.html(createNotifyMsg("Success!"));
+      window.setTimeout(function() { window.location = "/"; }, 2000);
+    } else {
+      loginNotify.html(createNotifyMsg("Invalid credentials."));
+      loginForm.show();
+    }
+    socket.close();
+  }
+
+  socket.onopen = function(event) {
+    socket.send(JSON.stringify({'user': user, 'password': password, 'req_type': 1}));
+  }
+
+  return false;
+}
 
 var doSignup = function() {
   var socket = new WebSocket("wss://flowboard.rocketeer.net:9001");
@@ -72,9 +104,9 @@ var doSignup = function() {
   cssFormValidate("#signup-email", true);
   cssFormValidate("#signup-user", true);
   var signupErrorNotify = $("#signup-error-notify");
-  signupErrorNotify.html(signupErrorTxt + "Signing up...</span>");
+  signupErrorNotify.html(createNotifyMsg("Signing up..."));
   socket.onmessage = function(event) {
-    response = JSON.parse(event.data);
+    var response = JSON.parse(event.data);
     msg = "";
     socket.close();
     signupErrorNotify.html("");
@@ -92,19 +124,22 @@ var doSignup = function() {
         msg = "Name and/or email are already taken. ";
       cssFormValidate("#signup-email", !response["email_dup"]);
       cssFormValidate("#signup-user", !response["name_dup"]);
+    } else if (response.hasOwnProperty("captcha_valid")) {
+      msg = "CAPTCHA invalid.";
     }
     if (msg !== "")
-      signupErrorNotify.html(signupErrorTxt + msg + "</span>");
+      signupErrorNotify.html(createNotifyMsg(msg));
     else if (response["success"])
     {
       signupForm.hide();
-      signupErrorNotify.html(signupErrorTxt + "Success!</span>");
+      signupErrorNotify.html(createNotifyMsg("Success! You may now login."));
       window.setTimeout(function() {$(".bg-cover").click()}, 2500);
     }
   }
 
   socket.onopen = function(e) {
-    socket.send(JSON.stringify({'email': email, 'user': user, 'password': password, 'recaptcha_response': recaptchaResponse}));
+    socket.send(JSON.stringify({'req_type': 0, 'email': email, 'user': user, 'password': password, 'recaptcha_response': grecaptcha.getResponse()}));
+    grecaptcha.reset();
   }
   return false;
 };

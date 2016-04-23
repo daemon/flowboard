@@ -240,3 +240,12 @@ input[type=submit]:hover {
   margin-top: 5px;
   margin-left: 45px;
 }
+
+#welcome-box {
+  float: right;
+  margin-top: 20px;
+}
+
+strong {
+  color: #000;
+}

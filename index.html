@@ -8,11 +8,13 @@
 </head>
 <body>
   <link rel="stylesheet" type="text/css" href="/static/main.css">
+  {{^authorized}}
   <div class="bg-cover"></div>
   <div class="popup-container" id="login-container">
-    <form id="login-form" class="popup-form" action="/login" method="post" autocomplete="off">
+    <section id="login-error-notify"></section>
+    <form id="login-form" class="popup-form" onsubmit="doLogin(); return false;" method="post" autocomplete="off">
       <input id="login-user" type="text" name="username" placeholder="Username">
-      <input type="password" name="password" placeholder="Password">
+      <input id="login-password" type="password" name="password" placeholder="Password">
       <input type="submit" value="Login">
     </form>
   </div>
@@ -27,11 +29,15 @@
       <input type="submit" value="Sign up">
     </form>
   </div>
+  {{/authorized}}
   <div id="container">
     <nav>
       <h2><a class="linkless" title="home" href="/">flowboard</a></h2><span> &mdash; a message board that just works</span>
+      {{^authorized}}
       <a id="signup-btn" class="action" href="#">Sign up</a>
       <a id="login-btn" href="#">Login</a>
+      {{/authorized}}
+      {{{authorized_welcome}}}
     </nav>
     <div id="main-container">
       <main>
