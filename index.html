@@ -1,8 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
+  <meta charset="UTF-8">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js" defer></script>
   <script src="/static/flowboard-index.js" defer></script>
+  <script src="https://www.google.com/recaptcha/api.js" defer></script>
 </head>
 <body>
   <link rel="stylesheet" type="text/css" href="/static/main.css">
@@ -15,11 +17,13 @@
     </form>
   </div>
   <div id="signup-container" class="popup-container">
-    <form id="signup-form" class="popup-form" action="/signup" method="post" autocomplete="off">
+    <section id="signup-error-notify"></section>
+    <form id="signup-form" class="popup-form" autocomplete="off" onsubmit="doSignup(); return false;" method="post">
       <input id="signup-email" type="email" name="email" placeholder="E-mail">
-      <input type="text" name="username" placeholder="Username">
-      <input type="password" name="password" placeholder="Password">
+      <input id="signup-user" type="text" name="username" placeholder="Username">
+      <input id="signup-password" type="password" name="password" placeholder="Password">
       <input type="password" name="confirm-password" placeholder="Confirm password">
+      <div id="recaptcha-signup" class="g-recaptcha" data-sitekey="6LekGR4TAAAAAJYYszDA7K7YfR0UHsV3IjRfnNLF"></div>
       <input type="submit" value="Sign up">
     </form>
   </div>
