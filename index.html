@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.2.2/jquery.min.js" defer></script>
+  <script src="https://code.jquery.com/color/jquery.color-2.1.2.min.js" defer></script>
   <script src="/static/flowboard-index.js" defer></script>
   <script src="https://www.google.com/recaptcha/api.js" defer></script>
 </head>
@@ -34,32 +35,34 @@
     <nav>
       <h2><a class="linkless" title="home" href="/">flowboard</a></h2><span> &mdash; a message board that just works</span>
       {{^authorized}}
-      <a id="signup-btn" class="action" href="#">Sign up</a>
-      <a id="login-btn" href="#">Login</a>
+      <a id="signup-btn" class="action" href="javascript:void(0)">Sign up</a>
+      <a id="login-btn" href="javascript:void(0)">Login</a>
       {{/authorized}}
       {{{authorized_welcome}}}
     </nav>
     <div id="main-container">
       <main>
-        <form id="topic-form" autocomplete="off" action="/post" method="post">
+        <form id="topic-form" autocomplete="off" action="javascript:void(0);" method="post">
           <input id="topic-title" class="title" type="text" name="title" placeholder="New topic..." autocomplete="off">
           <textarea maxlength="512" id="topic-body" class="body" name="body" placeholder="Message body" cols="40" rows="3" autocomplete="off"></textarea>
-          <input type="submit" value="Submit">
+          <input id="new-post-submit" type="submit" value="Submit">
         </form>
-        <article>
-          <div class="top-bar">
-            <span class="tag">[General]</span><span class="title" title="2069/04/20 4:20 EST">Lorem Ipsum Dolor</span><span class="author">tetrisd</span>
-          </div>
-          <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam...</p>
-          <div class="bottom-bar"><a href="#">12 replies</a></div>
-        </article>
-        <article>
-          <div class="top-bar">
-            <span class="tag">[Bending]</span><span class="title" title="2069/04/20 4:20 EST">To much lag CANT BEND!</span><span class="author">Xx_Noob_xX</span>
-          </div>
-          <p>Uhh lemme talk 2 server owner this server sux</p>
-          <div class="bottom-bar"><a href="#">0 replies</a></div>
-        </article>
+        <section id="posts">
+          <article>
+            <div class="top-bar">
+              <span class="title" title="2069/04/20 4:20 EST">Lorem Ipsum Dolor</span><span class="author">tetrisd</span>
+            </div>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam...</p>
+            <div class="bottom-bar"><a href="#">12 replies</a></div>
+          </article>
+          <article>
+            <div class="top-bar">
+              <span class="title" title="2069/04/20 4:20 EST">To much lag CANT BEND!</span><span class="author">Xx_Noob_xX</span>
+            </div>
+            <p>Uhh lemme talk 2 server owner this server sux</p>
+            <div class="bottom-bar"><a href="#">0 replies</a></div>
+          </article>
+        </section>
       </main>
       <menu>
         <img src="/static/search-01.png" />

@@ -3,6 +3,7 @@ from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerPr
 import cgi
 import cherrypy
 import flowboard_auth
+import flowboard_posts
 import json
 import os
 import os.path
@@ -21,6 +22,7 @@ class FlowBoard:
     client = pymongo.MongoClient()
     self.auth_db = flowboard_auth.AuthDatabase(client)
     self.auth_service = flowboard_auth.AuthService(self.auth_db)
+    self.posts_db = flowboard_posts.PostDatabase(client)
     FlowBoard.instance = self
     self.secret = "6LekGR4TAAAAADn4OR-Gr8pYqdpIJiv79re8fy24"
     self.index_parsed = pystache.parse(''.join(open('index.html').readlines()))
@@ -43,6 +45,25 @@ class FlowBoard:
       return self.original_index
     except KeyError:
       return self.original_index
+
+  """
+  /post endpoint
+  """
+  @cherrypy.expose
+  @cherrypy.tools.json_out()
+  def post(self, title, message, session_id=None):
+    if not session_id:
+      try:
+        ssid_cookie = cherrypy.request.cookie['ssid']
+      except KeyError:
+        return {"success": False}
+      session_id = ssid_cookie.value
+    user = self.auth_db.find_user_by_ssid(session_id)
+    if not user:
+      return {"success": False}
+    post_id = self.posts_db.create_post(title, message, user["_id"])
+    flowboard_posts.notify_new_post({"title": cgi.escape(title), "message": cgi.escape(message), "author": cgi.escape(user["name"]), "post_id": str(post_id), "n_replies": 0})
+    return {"success": True}
 
   """
   /register endpoint
@@ -77,8 +98,10 @@ class FlowBoard:
 class FlowBoardProtocol(WebSocketServerProtocol):
   NEW_USER_REQUEST = 0
   LOGIN_BY_NAME_REQUEST = 1
-  LOGIN_BY_SSID_REQUEST = 2
+  SUBSCRIBE_REQUEST = 2
+  NEW_POST_REQUEST = 3
   def onConnect(self, request):
+    self.subscribed = False
     self.ip = request.peer.split(":")[1]
 
   def onMessage(self, payload, isBinary):
@@ -89,9 +112,18 @@ class FlowBoardProtocol(WebSocketServerProtocol):
       json_response = FlowBoard.instance.register(json_request['user'], json_request['password'], json_request['email'], json_request['recaptcha_response'], self.ip)
     elif req_type == FlowBoardProtocol.LOGIN_BY_NAME_REQUEST:
       json_response = FlowBoard.instance.login(user=json_request['user'], password=json_request['password'])
+    elif req_type == FlowBoardProtocol.SUBSCRIBE_REQUEST:
+      flowboard_posts.subscribe_client(self)
+      self.subscribed = True
+    elif req_type == FlowBoardProtocol.NEW_POST_REQUEST:
+      json_response = FlowBoard.instance.post(json_request['title'], json_request['message'], json_request['ssid'])
     else:
       self.sendClose()
     self.sendMessage(json.dumps(json_response).encode())
+
+  def onClose(self, wasClean, code, reason):
+    if self.subscribed:
+      flowboard_posts.unsubscribe_client(self)
 
 if __name__ == '__main__':
   '''Websocket server'''
@@ -115,6 +147,7 @@ if __name__ == '__main__':
 
   cherrypy.server.socket_host = '127.0.0.1'
   th = threading.Thread(target=reactor.run, kwargs={"installSignalHandlers": 0})
+  flowboard_posts.start_main_loop()
   th.start()
   cherrypy.quickstart(FlowBoard(), '/', conf)
   th.join()

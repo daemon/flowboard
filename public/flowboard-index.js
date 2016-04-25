@@ -143,3 +143,75 @@ var doSignup = function() {
   }
   return false;
 };
+
+var createPost = function(id, title, author, message, nReplies) {
+  return "<article id='" + id + "'>\
+    <div class='top-bar'>\
+      <span class='title' title='" + (new Date()).toISOString() + "'>" + title + "</span><span class='author'>" + author + "</span>\
+    </div>\
+      <p><span>" + message + "</span></p>\
+    <div class='bottom-bar'><a href='javascript:void(0)' onclick='expandReplies(" + id + ");'>" + nReplies + " replies</a></div>\
+  </article>";
+}
+
+var NEW_THREAD = 0;
+var NEW_REPLY_NOTIFY = 1;
+
+var setupSubscription = function() {
+  var postSocket = new WebSocket("wss://flowboard.rocketeer.net:9001");
+  postSocket.onopen = function(event) {
+    postSocket.send('{"req_type": 2}');
+  };
+  postSocket.onmessage = function(event) {
+    data = JSON.parse(event.data);
+    if (data["post_type"] == NEW_THREAD) {
+      var title = data["title"];
+      var message = data["message"];
+      var author = data["author"];
+      var id = data["post_id"];
+      var nReplies = data["n_replies"];
+      var posts_section = $("#posts");
+      posts_section.prepend(createPost(id, title, author, message, nReplies))
+      $("#" + id + " span").css("background-color", "yellow").animate({backgroundColor: "#EEE"}, 1500);
+    } else if (data["post_type"] == NEW_REPLY_NOTIFY) {
+      var id = data["post_id"];
+      $("#" + id).animate({"background-color": "#EEE"}, "slow");
+    }
+  };
+};
+
+var getCookie = function(cname) {
+  var name = cname + "=";
+  var ca = document.cookie.split(';');
+  for(var i = 0; i <ca.length; i++) {
+    var c = ca[i];
+    while (c.charAt(0)==' ') {
+      c = c.substring(1);
+    }
+    if (c.indexOf(name) == 0)
+      return c.substring(name.length,c.length);
+  }
+
+  return "";
+} 
+
+$("#new-post-submit").click(function(e) {
+  var title = $("#topic-title").val();
+  var body = $("#topic-body").val();
+  var ssid = getCookie("ssid").slice(1, -1);
+  if (ssid === "")
+    return;
+  var ws = new WebSocket("wss://flowboard.rocketeer.net:9001");
+  ws.onopen = function(event) {
+    ws.send(JSON.stringify({"req_type": 3, "title": title, "message": body, "ssid": ssid}));
+  };
+
+  ws.onmessage = function(event) {
+    var response = JSON.parse(event.data);
+    ws.close();
+  }
+});
+
+$(window).load(function() {
+  setupSubscription();
+});
