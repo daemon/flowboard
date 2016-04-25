@@ -56,6 +56,12 @@ class PostDatabase:
     except:
       raise Exception("Can't create indices")
 
+  def recent_posts(self, limit):
+    return self.posts.find().sort([("creation_date", -1)]).limit(limit)
+
   def create_post(self, title, message, author_id):
-    return self.posts.insert_one({"author_id": author_id, "title": title, "message": message, 
-      "creation_date": datetime.datetime.utcnow(), "replies": []}).inserted_id
+    if len(title.strip()) > 0 and len(message.strip()) > 0:
+      return self.posts.insert_one({"author_id": author_id, "title": title.strip(), "message": message.strip(),
+        "creation_date": datetime.datetime.utcnow(), "replies": []}).inserted_id
+    else:
+      return None

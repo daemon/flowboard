@@ -151,6 +151,11 @@ article .bottom-bar {
   font-size: 12pt;
 }
 
+#topic-body {
+  /* Chrome mobile resizing textarea fix */
+  height: 100px;
+}
+
 #topic-form {
   width: 921px;
   overflow: hidden;

@@ -44,24 +44,11 @@
       <main>
         <form id="topic-form" autocomplete="off" action="javascript:void(0);" method="post">
           <input id="topic-title" class="title" type="text" name="title" placeholder="New topic..." autocomplete="off">
-          <textarea maxlength="512" id="topic-body" class="body" name="body" placeholder="Message body" cols="40" rows="3" autocomplete="off"></textarea>
+          <textarea maxlength="512" id="topic-body" name="body" placeholder="Message body" cols="40" rows="3" autocomplete="off"></textarea>
           <input id="new-post-submit" type="submit" value="Submit">
         </form>
         <section id="posts">
-          <article>
-            <div class="top-bar">
-              <span class="title" title="2069/04/20 4:20 EST">Lorem Ipsum Dolor</span><span class="author">tetrisd</span>
-            </div>
-            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam...</p>
-            <div class="bottom-bar"><a href="#">12 replies</a></div>
-          </article>
-          <article>
-            <div class="top-bar">
-              <span class="title" title="2069/04/20 4:20 EST">To much lag CANT BEND!</span><span class="author">Xx_Noob_xX</span>
-            </div>
-            <p>Uhh lemme talk 2 server owner this server sux</p>
-            <div class="bottom-bar"><a href="#">0 replies</a></div>
-          </article>
+          {{{posts}}}
         </section>
       </main>
       <menu>

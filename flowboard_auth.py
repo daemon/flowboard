@@ -97,11 +97,15 @@ class AuthDatabase:
     user = self.users.find_one({"_id": session["user_id"]})
     return user
 
+  def find_user_by_id(self, user_id):
+    user = self.users.find_one({"_id": user_id})
+    return user
+
   """
   Attempts to authenticate a user given name and password. Returns session ID string on success, None otherwise
   """
   def login_by_name(self, name, password):
-    user = self.users.find_one({"name": name})
+    user = self.users.find_one({"name": re.compile(name, re.IGNORECASE)})
     if not user:
       return None
     salt = user["salt"]
@@ -129,9 +133,9 @@ class AuthDatabase:
   """
   def create_user(self, form_data):
     ret = self.status_bad
-    if self.users.find_one({"name": form_data.user.strip()}):
+    if self.users.find_one({"name": re.compile(form_data.user.strip(), re.IGNORECASE)}):
       ret |= self.status_name_dup
-    if self.users.find_one({"email": form_data.email}):
+    if self.users.find_one({"email": re.compile(form_data.email, re.IGNORECASE)}):
       ret |= self.status_email_dup
     if ret != self.status_bad:
       return ret

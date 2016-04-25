@@ -27,7 +27,29 @@ class FlowBoard:
     self.secret = "6LekGR4TAAAAADn4OR-Gr8pYqdpIJiv79re8fy24"
     self.index_parsed = pystache.parse(''.join(open('index.html').readlines()))
     self.renderer = pystache.Renderer()
-    self.original_index = self.renderer.render(self.index_parsed)
+    self.recent_posts_html = self.most_recent_posts_html(10)
+    self.notify_update()
+
+  @staticmethod
+  def create_post_html(post_id, title, author, message, n_replies):
+    return """<article id='%s'>
+    <div class='top-bar'>
+      <span class='title' title=''>%s</span><span class='author'>%s</span>
+    </div>
+      <p><span>%s</span></p>
+    <div class='bottom-bar'><a href='javascript:void(0)' onclick='expandReplies(%s);'>%s replies</a></div>
+  </article>""" % (post_id, title, author, message, post_id, n_replies)
+
+  def most_recent_posts_html(self, limit):
+    posts = self.posts_db.recent_posts(limit)
+    posts_html = ''.join([FlowBoard.create_post_html(post["_id"], post["title"], 
+      self.auth_db.find_user_by_id(post["author_id"])["name"],
+      post["message"], len(post["replies"])) for post in posts])
+    return posts_html
+
+  def notify_update(self):
+    self.recent_posts_html = self.most_recent_posts_html(10)
+    self.original_index = self.renderer.render(self.index_parsed, {"posts": self.recent_posts_html})
 
   """
   / endpoint
@@ -40,7 +62,7 @@ class FlowBoard:
       response = self.login(session_id=ssid)
       if response['success']:
         username = self.auth_db.find_user_by_ssid(ssid)["name"]
-        return self.renderer.render(self.index_parsed, {"authorized": True, 
+        return self.renderer.render(self.index_parsed, {"authorized": True, "posts": self.recent_posts_html,
           "authorized_welcome": ''.join(["<span id='welcome-box'>Welcome, <strong>", cgi.escape(username), "</strong></span>"])})
       return self.original_index
     except KeyError:
@@ -62,7 +84,10 @@ class FlowBoard:
     if not user:
       return {"success": False}
     post_id = self.posts_db.create_post(title, message, user["_id"])
-    flowboard_posts.notify_new_post({"title": cgi.escape(title), "message": cgi.escape(message), "author": cgi.escape(user["name"]), "post_id": str(post_id), "n_replies": 0})
+    if not post_id:
+      return {"success": False}
+    flowboard_posts.notify_new_post({"title": cgi.escape(title.strip()), "message": cgi.escape(message.strip()), "author": cgi.escape(user["name"]), "post_id": str(post_id), "n_replies": 0})
+    self.notify_update()
     return {"success": True}
 
   """

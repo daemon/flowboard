@@ -10,7 +10,7 @@ $(document).mouseup(function() {
 $("#topic-title").click(function() {
   if (!expanded)
   {
-    $("#topic-form").animate({"height": "195px"}, "fast");
+    $("#topic-form").animate({"height": ($("#topic-body").outerHeight() + $("#new-post-submit").outerHeight() + 49) + "px"}, "fast");
     expanded = true;
   }
 });
@@ -208,6 +208,10 @@ $("#new-post-submit").click(function(e) {
 
   ws.onmessage = function(event) {
     var response = JSON.parse(event.data);
+    if (response["success"]) {
+      $("#topic-title").val("");
+      $("#topic-body").val("");
+    }
     ws.close();
   }
 });
