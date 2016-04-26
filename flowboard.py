@@ -107,6 +107,21 @@ class FlowBoard:
     return {"success": True}
 
   """
+  /replies endpoint
+  """
+  @cherrypy.expose
+  @cherrypy.tools.json_out()
+  def replies(self, post_id):
+    post = self.posts_db.find_post(bson.ObjectId(post_id))
+    if not post:
+      return {"success": False}
+    replies = post["replies"]
+    for reply in replies:
+      reply["author"] = self.auth_db.find_user_by_id(reply["author_id"])["name"]
+      del reply["author_id"]
+    return {"replies": replies, "success": True}
+
+  """
   /register endpoint
     @param user the username to register. It MUST be at least 2 printable characters long, trailing and leading whitespace excepted.
     @param password the password to use. It MUST be at least 10 characters long with an alphabet of upper, lower, and numeric characters.
@@ -143,6 +158,7 @@ class FlowBoardProtocol(WebSocketServerProtocol):
   NEW_POST_REQUEST = 3
   NEW_REPLY_REQUEST = 4
   SUBSCRIBE_REPLY_REQUEST = 5
+  GET_REPLIES_REQUEST = 6
   def onConnect(self, request):
     self.subscribed = False
     self.ip = request.peer.split(":")[1]
@@ -165,6 +181,8 @@ class FlowBoardProtocol(WebSocketServerProtocol):
       json_response = FlowBoard.instance.post(json_request['title'], json_request['message'], json_request['ssid'])
     elif req_type == FlowBoardProtocol.NEW_REPLY_REQUEST:
       json_response = FlowBoard.instance.reply(json_request['post_id'], json_request['message'], json_request['ssid'])
+    elif req_type == FlowBoardProtocol.GET_REPLIES_REQUEST:
+      json_response = FlowBoard.instance.replies(json_request['post_id'])
     else:
       self.sendClose()
     self.sendMessage(json.dumps(json_response).encode())

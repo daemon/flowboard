@@ -161,11 +161,15 @@ var checkTaskId = false;
 
 var checkPostSocket = function() {
   if (postSocket.readyState === undefined || postSocket.readyState > 1) {
-    console.log("Fucking up");
     postSocket.close();
     postSocket = new WebSocket("wss://flowboard.rocketeer.net:9001");
     setupPostSocket(postSocket);
   }
+};
+
+var createReply = function(author, message) {
+  return "<article style='padding-left: 20px; width: 800px; border-bottom: none;'>\
+        <span style='word-wrap: break-word; width: 800px;'><strong>" + author + "</strong>: " + message + "</span></article>";
 };
 
 var setupPostSocket = function(socket) {
@@ -194,12 +198,11 @@ var setupPostSocket = function(socket) {
     } else if (data["post_type"] == NEW_REPLY_NOTIFY) {
       var message = data["message"];
       var author = data["author"];
-      $("#reply-container-" + data["post_id"]).append("<article style='padding-left: 20px; width: 800px; border-bottom: none;'>\
-        <span style='word-wrap: break-word; width: 800px;'><strong>" + author + "</strong>: " + message + "</span></article>")
+      $("#reply-container-" + data["post_id"]).append(createReply(author, message))
         .scrollTop($("#reply-container-" + data["post_id"] + " article").length * 50);
     }
   };
-}
+};
 
 setupPostSocket(postSocket);
 
@@ -226,10 +229,29 @@ var expandReplies = function(post_id) {
   if (!post.attr("data-expanded")) {
     subscribedTopics.push(post_id);
     postSocket.send(JSON.stringify({req_type: 5, post_id: post_id}));
+    post.append("<span style='text-align: center; width: 100%;'>Loading...</span>");
     post.append("<section class='replies' id='reply-container-" + post_id + "'></section><form autocomplete='off'\
       onsubmit=\"return doReply('" + post_id + "');\" id='form-" + post_id + "' style='margin-top:5px; width: 930px'>\
       <input placeholder='Message' id='reply-" + post_id + "' type='text' style='width: 760px;'>\
       <input id='reply-submit-" + post_id + "' type='submit' value='Submit' style='width: 140px;'></form>");
+    var socket = new WebSocket("wss://flowboard.rocketeer.net:9001");
+    socket.onopen = function(e) {
+      socket.send(JSON.stringify({post_id: post_id, req_type: 6}));
+    };
+
+    socket.onmessage = function(e) {
+      $("#" + post_id + " > span").remove();
+      response = JSON.parse(e.data);
+      if (!response["success"])
+        return;
+      var reply_container = $("#reply-container-" + post_id);
+      for (i in response["replies"]) {
+        author = response["replies"][i]["author"];
+        message = response["replies"][i]["message"];
+        reply_container.append(createReply(author, message));
+      }
+      reply_container.scrollTop($("#reply-container-" + post_id + " article").length * 50);
+    }
   }
   post.attr("data-expanded", true);
 };
