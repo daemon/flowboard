@@ -1,5 +1,6 @@
 #!/usr/bin/python3
 from autobahn.twisted.websocket import WebSocketServerFactory, WebSocketServerProtocol, listenWS
+import bson
 import cgi
 import cherrypy
 import flowboard_auth
@@ -32,13 +33,14 @@ class FlowBoard:
 
   @staticmethod
   def create_post_html(post_id, title, author, message, n_replies):
+    replies_str = "reply" if not n_replies else "%s replies" % n_replies
     return """<article id='%s'>
     <div class='top-bar'>
       <span class='title' title=''>%s</span><span class='author'>%s</span>
     </div>
       <p><span>%s</span></p>
-    <div class='bottom-bar'><a href='javascript:void(0)' onclick='expandReplies(%s);'>%s replies</a></div>
-  </article>""" % (post_id, title, author, message, post_id, n_replies)
+    <div class='bottom-bar'><a class="reply" href='javascript:void(0)' data-reply-id='%s'>%s</a></div>
+  </article>""" % (post_id, title, author, message, post_id, replies_str)
 
   def most_recent_posts_html(self, limit):
     posts = self.posts_db.recent_posts(limit)
@@ -91,6 +93,20 @@ class FlowBoard:
     return {"success": True}
 
   """
+  /reply endpoint
+  """
+  @cherrypy.expose
+  @cherrypy.tools.json_out()
+  def reply(self, post_id, message, session_id):
+    user = self.auth_db.find_user_by_ssid(session_id)
+    if not user:
+      return {"success": False}
+    if not self.posts_db.create_reply(bson.ObjectId(post_id), user["_id"], message):
+      return {"success": False}
+    flowboard_posts.notify_new_post({"post_id": post_id, "author": cgi.escape(user["name"]), "message": cgi.escape(message)}, reply=True)
+    return {"success": True}
+
+  """
   /register endpoint
     @param user the username to register. It MUST be at least 2 printable characters long, trailing and leading whitespace excepted.
     @param password the password to use. It MUST be at least 10 characters long with an alphabet of upper, lower, and numeric characters.
@@ -125,6 +141,8 @@ class FlowBoardProtocol(WebSocketServerProtocol):
   LOGIN_BY_NAME_REQUEST = 1
   SUBSCRIBE_REQUEST = 2
   NEW_POST_REQUEST = 3
+  NEW_REPLY_REQUEST = 4
+  SUBSCRIBE_REPLY_REQUEST = 5
   def onConnect(self, request):
     self.subscribed = False
     self.ip = request.peer.split(":")[1]
@@ -140,8 +158,13 @@ class FlowBoardProtocol(WebSocketServerProtocol):
     elif req_type == FlowBoardProtocol.SUBSCRIBE_REQUEST:
       flowboard_posts.subscribe_client(self)
       self.subscribed = True
+    elif req_type == FlowBoardProtocol.SUBSCRIBE_REPLY_REQUEST:
+      flowboard_posts.subscribe_reply_client(self, json_request['post_id'])
+      self.subscribed = True
     elif req_type == FlowBoardProtocol.NEW_POST_REQUEST:
       json_response = FlowBoard.instance.post(json_request['title'], json_request['message'], json_request['ssid'])
+    elif req_type == FlowBoardProtocol.NEW_REPLY_REQUEST:
+      json_response = FlowBoard.instance.reply(json_request['post_id'], json_request['message'], json_request['ssid'])
     else:
       self.sendClose()
     self.sendMessage(json.dumps(json_response).encode())
@@ -149,6 +172,7 @@ class FlowBoardProtocol(WebSocketServerProtocol):
   def onClose(self, wasClean, code, reason):
     if self.subscribed:
       flowboard_posts.unsubscribe_client(self)
+      flowboard_posts.unsubscribe_reply_client_all(self)
 
 if __name__ == '__main__':
   '''Websocket server'''

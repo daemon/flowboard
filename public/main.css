@@ -146,9 +146,20 @@ article p {
   width: 100%;
 }
 
+article p span {
+  width: 100%;
+  word-wrap: break-word;
+}
+
 article .bottom-bar {
   float: right;
   font-size: 12pt;
+}
+
+section.replies {
+  max-height: 200px;
+  overflow: auto;
+  width: 900px;
 }
 
 #topic-body {

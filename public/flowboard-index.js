@@ -150,35 +150,72 @@ var createPost = function(id, title, author, message, nReplies) {
       <span class='title' title='" + (new Date()).toISOString() + "'>" + title + "</span><span class='author'>" + author + "</span>\
     </div>\
       <p><span>" + message + "</span></p>\
-    <div class='bottom-bar'><a href='javascript:void(0)' onclick='expandReplies(" + id + ");'>" + nReplies + " replies</a></div>\
+    <div class='bottom-bar'><a id='link-" + id + "' class='reply' href='javascript:void(0)'>" + nReplies + " replies</a></div>\
   </article>";
 }
 
 var NEW_THREAD = 0;
 var NEW_REPLY_NOTIFY = 1;
-
-var setupSubscription = function() {
-  var postSocket = new WebSocket("wss://flowboard.rocketeer.net:9001");
-  postSocket.onopen = function(event) {
-    postSocket.send('{"req_type": 2}');
-  };
-  postSocket.onmessage = function(event) {
-    data = JSON.parse(event.data);
-    if (data["post_type"] == NEW_THREAD) {
-      var title = data["title"];
-      var message = data["message"];
-      var author = data["author"];
-      var id = data["post_id"];
-      var nReplies = data["n_replies"];
-      var posts_section = $("#posts");
-      posts_section.prepend(createPost(id, title, author, message, nReplies))
-      $("#" + id + " span").css("background-color", "yellow").animate({backgroundColor: "#EEE"}, 1500);
-    } else if (data["post_type"] == NEW_REPLY_NOTIFY) {
-      var id = data["post_id"];
-      $("#" + id).animate({"background-color": "#EEE"}, "slow");
-    }
-  };
+var postSocket = new WebSocket("wss://flowboard.rocketeer.net:9001");
+postSocket.onopen = function(event) {
+  postSocket.send('{"req_type": 2}');
 };
+
+postSocket.onmessage = function(event) {
+  data = JSON.parse(event.data);
+  if (data["post_type"] == NEW_THREAD) {
+    var title = data["title"];
+    var message = data["message"];
+    var author = data["author"];
+    var id = data["post_id"];
+    var nReplies = data["n_replies"];
+    var posts_section = $("#posts");
+    posts_section.prepend(createPost(id, title, author, message, nReplies))
+    $("#link-" + id).click(function() { expandReplies(id); });
+    $("#" + id + " span").css("background-color", "yellow").animate({backgroundColor: "#EEE"}, 1500);
+  } else if (data["post_type"] == NEW_REPLY_NOTIFY) {
+    var message = data["message"];
+    var author = data["author"];
+    $("#reply-container-" + data["post_id"]).append("<article style='padding-left: 20px; width: 800px; border-bottom: none;'>\
+      <span style='word-wrap: break-word; width: 800px;'><strong>" + author + "</strong>: " + message + "</span></article>")
+      .scrollTop($("#reply-container-" + data["post_id"] + " article").length * 50);
+  }
+};
+
+var doReply = function(id) {
+  var message = $("#reply-" + id).val();
+  $("#reply-" + id).val("");
+  var request = JSON.stringify({req_type: 4, post_id: id, message: message, ssid: getCookie("ssid").slice(1, -1)});
+  var socket = new WebSocket("wss://flowboard.rocketeer.net:9001");
+  socket.onopen = function(e) {
+    socket.send(request);
+  }
+
+  socket.onmessage = function(e) {
+    socket.close();
+  }
+  return false;
+};
+
+// todo toggle replies
+var expandReplies = function(post_id) {
+  var post = $("#" + post_id);
+  if (!post.attr("data-expanded")) {
+    postSocket.send(JSON.stringify({req_type: 5, post_id: post_id}));
+    post.append("<section class='replies' id='reply-container-" + post_id + "'></section><form autocomplete='off'\
+      onsubmit='doReply(\"" + post_id + "\"); return false;' id='form-" + post_id + "' style='margin-top:5px; width: 930px'>\
+      <input placeholder='Message' id='reply-" + post_id + "' type='text' style='width: 760px;'>\
+      <input id='reply-submit-" + post_id + "' type='submit' value='Submit' style='width: 140px;'></form>");
+  }
+  post.attr("data-expanded", true);
+};
+
+$(".reply").each(function(index) {
+  $(this).click(function() {
+    expandReplies($(this).attr("data-reply-id"));
+    $("#reply-" + $(this).attr("data-reply-id")).focus();
+  });
+});
 
 var getCookie = function(cname) {
   var name = cname + "=";
@@ -214,8 +251,4 @@ $("#new-post-submit").click(function(e) {
     }
     ws.close();
   }
-});
-
-$(window).load(function() {
-  setupSubscription();
 });
