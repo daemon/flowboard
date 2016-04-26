@@ -157,34 +157,55 @@ var createPost = function(id, title, author, message, nReplies) {
 var NEW_THREAD = 0;
 var NEW_REPLY_NOTIFY = 1;
 var postSocket = new WebSocket("wss://flowboard.rocketeer.net:9001");
-postSocket.onopen = function(event) {
-  postSocket.send('{"req_type": 2}');
-};
+var checkTaskId = false;
 
-postSocket.onmessage = function(event) {
-  data = JSON.parse(event.data);
-  if (data["post_type"] == NEW_THREAD) {
-    var title = data["title"];
-    var message = data["message"];
-    var author = data["author"];
-    var id = data["post_id"];
-    var nReplies = data["n_replies"];
-    var posts_section = $("#posts");
-    posts_section.prepend(createPost(id, title, author, message, nReplies))
-    $("#link-" + id).click(function() { expandReplies(id); });
-    $("#" + id + " span").css("background-color", "yellow").animate({backgroundColor: "#EEE"}, 1500);
-  } else if (data["post_type"] == NEW_REPLY_NOTIFY) {
-    var message = data["message"];
-    var author = data["author"];
-    $("#reply-container-" + data["post_id"]).append("<article style='padding-left: 20px; width: 800px; border-bottom: none;'>\
-      <span style='word-wrap: break-word; width: 800px;'><strong>" + author + "</strong>: " + message + "</span></article>")
-      .scrollTop($("#reply-container-" + data["post_id"] + " article").length * 50);
+var checkPostSocket = function() {
+  if (postSocket.readyState === undefined || postSocket.readyState > 1) {
+    console.log("Fucking up");
+    postSocket.close();
+    postSocket = new WebSocket("wss://flowboard.rocketeer.net:9001");
+    setupPostSocket(postSocket);
   }
 };
 
+var setupPostSocket = function(socket) {
+  socket.onopen = function(event) {
+    if (checkTaskId !== false)
+      clearInterval(checkTaskId);
+    socket.send('{"req_type": 2}');
+    checkTaskId = setInterval(checkPostSocket, 15000);
+    for (i in subscribedTopics) {
+      socket.send(JSON.stringify({req_type: 5, post_id: subscribedTopics[i]}));
+    }
+  };
+
+  socket.onmessage = function(event) {
+    data = JSON.parse(event.data);
+    if (data["post_type"] == NEW_THREAD) {
+      var title = data["title"];
+      var message = data["message"];
+      var author = data["author"];
+      var id = data["post_id"];
+      var nReplies = data["n_replies"];
+      var posts_section = $("#posts");
+      posts_section.prepend(createPost(id, title, author, message, nReplies))
+      $("#link-" + id).click(function() { expandReplies(id); });
+      $("#" + id + " span").css("background-color", "yellow").animate({backgroundColor: "#EEE"}, 1500);
+    } else if (data["post_type"] == NEW_REPLY_NOTIFY) {
+      var message = data["message"];
+      var author = data["author"];
+      $("#reply-container-" + data["post_id"]).append("<article style='padding-left: 20px; width: 800px; border-bottom: none;'>\
+        <span style='word-wrap: break-word; width: 800px;'><strong>" + author + "</strong>: " + message + "</span></article>")
+        .scrollTop($("#reply-container-" + data["post_id"] + " article").length * 50);
+    }
+  };
+}
+
+setupPostSocket(postSocket);
+
 var doReply = function(id) {
   var message = $("#reply-" + id).val();
-  $("#reply-" + id).val("");
+  $("#reply-" + id).val("").focus();
   var request = JSON.stringify({req_type: 4, post_id: id, message: message, ssid: getCookie("ssid").slice(1, -1)});
   var socket = new WebSocket("wss://flowboard.rocketeer.net:9001");
   socket.onopen = function(e) {
@@ -197,13 +218,16 @@ var doReply = function(id) {
   return false;
 };
 
+var subscribedTopics = [];
+
 // todo toggle replies
 var expandReplies = function(post_id) {
   var post = $("#" + post_id);
   if (!post.attr("data-expanded")) {
+    subscribedTopics.push(post_id);
     postSocket.send(JSON.stringify({req_type: 5, post_id: post_id}));
     post.append("<section class='replies' id='reply-container-" + post_id + "'></section><form autocomplete='off'\
-      onsubmit='doReply(\"" + post_id + "\"); return false;' id='form-" + post_id + "' style='margin-top:5px; width: 930px'>\
+      onsubmit=\"return doReply('" + post_id + "');\" id='form-" + post_id + "' style='margin-top:5px; width: 930px'>\
       <input placeholder='Message' id='reply-" + post_id + "' type='text' style='width: 760px;'>\
       <input id='reply-submit-" + post_id + "' type='submit' value='Submit' style='width: 140px;'></form>");
   }
